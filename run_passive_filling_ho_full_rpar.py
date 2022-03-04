@@ -106,7 +106,7 @@ if __name__ == "__main__":
 					'as': as1, 'bs': bs, 
 					'afs': afs, 'bfs': bfs} 
 
-		qin = np.array([a,b,af,bf,as1,bs,afs,bfs])
+		qin = np.array([q1,q2,q3,q4])
 		aux = i + start
 
 		print("\nRodando caso %d: (%f,%f,%f,%f,%f,%f,%f,%f)" % (aux, a, b, af, bf, as1, bs, afs, bfs))
@@ -118,7 +118,7 @@ if __name__ == "__main__":
 		# senao deu erro, salva os dados
 		if out is not None:
 			evals.append(out)
-			np.savetxt(f_data, np.concatenate((qin,out)).reshape((1,14)), fmt='%16.8e', delimiter=',')
+			np.savetxt(f_data, np.concatenate((qin,out)).reshape((1,10)), fmt='%16.8e', delimiter=',')
 			f_data.flush()
 		else:
 			print("\n\Erro na execucao da amostra\n\n")
