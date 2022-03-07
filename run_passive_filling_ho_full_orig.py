@@ -19,16 +19,6 @@ if __name__ == "__main__":
 	afs0 = 410
 	bfs0 = 11.3
 
-	a0 = 228.0	 			# Pa
-	b0 = 7.780				# dimensionless
-	af0 = 116.85	 		# Pa
-	bf0 = 11.83425			# dimensionless
-	as0 = 372
-	bs0 = 5.16
-	afs0 = 410
-	bfs0 = 11.3
-
-
 	a   = cp.Uniform(0.7*a0,   1.3*a0)
 	b   = cp.Uniform(0.7*b0,   1.3*b0)
 	af  = cp.Uniform(0.7*af0,  1.3*af0)
@@ -47,8 +37,6 @@ if __name__ == "__main__":
 	Np = int(factorial(npar+pce_degree)/(factorial(npar)*factorial(pce_degree))) # min number of terms for PCE
 	Ns = pce_mult * Np		#number of samples
 	
-	Ns = 2
-
 	# number of sample to start 
 	start = 0
 

@@ -54,6 +54,8 @@ if __name__ == "__main__":
 	Np = int(factorial(npar+pce_degree)/(factorial(npar)*factorial(pce_degree))) # min number of terms for PCE
 	Ns = pce_mult * Np	# number of samples
 
+	Ns = 110
+
 	# number of sample to start 
 	start = 0
 
@@ -72,8 +74,8 @@ if __name__ == "__main__":
 	os.mkdir("output/")
 
 	# output data for inputs/outputs
-	fd = "output/trainData.txt"
-	#fd = "output/testData.txt"
+	#fd = "output/trainData.txt"
+	fd = "output/testData.txt"
 	f_data = open(fd,'w')
 	f_data.write('# a, b, af, bf, as, bs, afs, bfs, alfa1, beta1, alfa2, beta2, vol, fibstretch \n')
 
