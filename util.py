@@ -7,6 +7,38 @@ plt.style.use('ieee')
 
 # -----------------------------------------------------------------------------
 
+def perform_uq(surrogates, dist):
+	
+	for index, skey in enumerate(surrogates):
+		surr = surrogates[skey]		 	
+		surr_avg = cp.E(surr, dist)
+		surr_std = cp.Std(surr, dist)
+		print(' ' + skey + ' %.2f %.2f' % (surr_avg, surr_std))
+
+# -----------------------------------------------------------------------------
+
+def plot_qois(surrogates, dist, lablstex):
+	size = 7000
+	for index, skey in enumerate(surrogates):
+		print(' distribuicao de ' + skey)
+		surr = surrogates[skey]		 	
+		dist_qoi = cp.QoI_Dist(surr, dist)
+		texl_qoi = lablstex[skey]
+		#plot_qoi(dist_qoi, 'hist_'+skey, texl_qoi)
+		# plot
+		outf = 'hist_' + skey
+		plt.figure()
+		values = dist_qoi.sample(size).round(6)
+		plt.hist(values, 30, density=True)
+		plt.xlabel(texl_qoi)
+		plt.ylabel('density [-]')
+		plt.tight_layout()
+		plt.savefig('fig_' + outf + '.pdf')
+		plt.savefig('fig_' + outf + '.png', dpi=300)
+		np.savetxt('data_' + outf + '.txt', values)
+
+# -----------------------------------------------------------------------------
+
 def pce_prediction(surrogate, samples, test_data, out_index, out_label):
 
 	n = np.shape(samples)[1]
@@ -39,7 +71,7 @@ def pce_prediction(surrogate, samples, test_data, out_index, out_label):
 
 def plot_qoi(dist_qoi, outf, x_label):
 	plt.figure()
-	values = dist_qoi.sample(10000).round(6)
+	values = dist_qoi.sample(1000).round(6)
 	plt.hist(values, 50, density=True)
 	plt.xlabel(x_label)
 	plt.ylabel('density [-]')
