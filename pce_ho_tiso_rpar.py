@@ -10,7 +10,7 @@ import time
 import argparse
 from math import factorial
 from loo import calcula_loo
-from util import pce_prediction,plot_qoi,scatter_inputs, scatter_inputs_outputs
+from util import *
 
 plt.style.use(['science','no-latex'])
 
@@ -104,56 +104,37 @@ if __name__ == "__main__":
 
 	surrogates = {'alfa1': surr_model_alfa1, 'beta1': surr_model_beta1, 
 	 			  'alfa2': surr_model_alfa2, 'beta2': surr_model_beta2, 
-				  'vol': surr_model_vol, 'def': surr_model_def}
+				  'edvol': surr_model_vol,   'eddef': surr_model_def}
+
+	tex_labels = {'alfa1': r'$\alpha_1$', 'beta1': r'$\beta_1$', 
+	 			  'alfa2': r'$\alpha_2$', 'beta2': r'$\beta_2$', 
+				  'edvol': 'volume [mL]', 'eddef': 'fiber stretch [-]'}
 
 	#
-	# quantificacao de incertezas
+	# uncertainty quantification
 	#
 	if(args.uq):
-
-		mean_alfa1 = cp.E(surr_model_alfa1, distribution)
-		std_alfa1 = cp.Std(surr_model_alfa1, distribution)
-
-		mean_beta1 = cp.E(surr_model_beta1, distribution)
-		std_beta1 = cp.Std(surr_model_beta1, distribution)
-
-		mean_alfa2 = cp.E(surr_model_alfa2, distribution)
-		std_alfa2 = cp.Std(surr_model_alfa2, distribution)
-
-		mean_beta2 = cp.E(surr_model_beta2, distribution)
-		std_beta2 = cp.Std(surr_model_beta2, distribution)
-
-		mean_vol = cp.E(surr_model_vol, distribution)
-		std_vol = cp.Std(surr_model_vol, distribution)
-
-		mean_def = cp.E(surr_model_def, distribution)
-		std_def = cp.Std(surr_model_def, distribution)
-		
-		print("dados dos emuladores (alfa1,beta1,alfa2,beta2,vol,def)")	
-		print(" alfa1: %.2f %.2f" % (mean_alfa1, std_alfa1))
-		print(" beta1: %.2f %.2f" % (mean_beta1, std_beta1))
-		print(" alfa2: %.2f %.2f" % (mean_alfa2, std_alfa2))
-		print(" beta2: %.2f %.2f" % (mean_beta2, std_beta2))
-		print(" edvol: %.2f %.2f" % (mean_vol, std_vol))
-		print(" eddef: %.2f %.2f" % (mean_def, std_def))
+		print("dados dos emuladores (alfa1,beta1,alfa2,beta2,vol,def)")
+		perform_uq(surrogates, distribution)
 
 	#
 	# plot QoI distributions
 	#
 	if(args.qoi):
 		print('criando e calculando distribuicoes das QoIs')
-		dist_alfa1 = cp.QoI_Dist(surr_model_alfa1, distribution)
-		dist_beta1 = cp.QoI_Dist(surr_model_beta1, distribution)
-		dist_alfa2 = cp.QoI_Dist(surr_model_alfa2, distribution)
-		dist_beta2 = cp.QoI_Dist(surr_model_beta2, distribution)
-		dist_edvol = cp.QoI_Dist(surr_model_vol, distribution)
-		dist_eddef = cp.QoI_Dist(surr_model_def, distribution)
-		plot_qoi(dist_alfa1, 'hist_alfa1', r'$\alpha_1$')
-		plot_qoi(dist_beta1, 'hist_beta1', r'$\beta_1$')
-		plot_qoi(dist_alfa2, 'hist_alfa2', r'$\alpha_2$')
-		plot_qoi(dist_beta2, 'hist_beta2', r'$\beta_2$')
-		plot_qoi(dist_edvol, 'hist_vol', 'volume [mL]')
-		plot_qoi(dist_eddef, 'hist_def', 'fiber stretch [-]')
+		plot_qois(surrogates, distribution, tex_labels)
+		#dist_alfa1 = cp.QoI_Dist(surr_model_alfa1, distribution)
+		#dist_beta1 = cp.QoI_Dist(surr_model_beta1, distribution)
+		#dist_alfa2 = cp.QoI_Dist(surr_model_alfa2, distribution)
+		#dist_beta2 = cp.QoI_Dist(surr_model_beta2, distribution)
+		#dist_edvol = cp.QoI_Dist(surr_model_vol, distribution)
+		#dist_eddef = cp.QoI_Dist(surr_model_def, distribution)
+		#plot_qoi(dist_alfa1, 'hist_alfa1', r'$\alpha_1$')
+		#plot_qoi(dist_beta1, 'hist_beta1', r'$\beta_1$')
+		#plot_qoi(dist_alfa2, 'hist_alfa2', r'$\alpha_2$')
+		#plot_qoi(dist_beta2, 'hist_beta2', r'$\beta_2$')
+		#plot_qoi(dist_edvol, 'hist_vol', 'volume [mL]')
+		#plot_qoi(dist_eddef, 'hist_def', 'fiber stretch [-]')
 
 	#
 	# check prediction accuracy

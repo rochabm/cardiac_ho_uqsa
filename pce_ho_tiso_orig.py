@@ -33,8 +33,15 @@ if __name__ == "__main__":
 	parser.add_argument('-uq', dest='uq', action='store_true', help='perform UQ ')
 	parser.add_argument('-sa', dest='sa', action='store_true', help='perform SA (Sobol indices)')
 	parser.add_argument('-qoi', dest='qoi', action='store_true',help='obtain QoIs dist')
+	parser.add_argument('-all', dest='all', action='store_true', help='perform all tasks (UQ/SA/QoI/test)')
 	parser.add_argument('-test', dest='test', action='store_true',help='check test data and prediction accuracy')
 	args = parser.parse_args()
+
+	if(args.all):
+		args.uq = True
+		args.sa = True
+		args.qoi = True
+		args.test = True
 
 	# Holzapfel-Ogden reference values
 	a0 = 150 #228.0	 		# Pa
@@ -56,7 +63,6 @@ if __name__ == "__main__":
 	pce_mult = 2   # multiplicative factor
 	Np = int(factorial(npar+pce_degree)/(factorial(npar)*factorial(pce_degree)))
 	Ns = pce_mult * Np
-
 	print("numero de parametros de entrada", npar)
 	print("numero de saidas", nout)
 	print("grau do polinomio", pce_degree)
@@ -112,41 +118,20 @@ if __name__ == "__main__":
 	surr_model_beta1 = cp.fit_regression(poly_exp, samples, outputs[1,:])
 	surr_model_alfa2 = cp.fit_regression(poly_exp, samples, outputs[2,:])
 	surr_model_beta2 = cp.fit_regression(poly_exp, samples, outputs[3,:])	
-	surr_model_vol   = cp.fit_regression(poly_exp, samples, outputs[4,:])	
-	surr_model_def   = cp.fit_regression(poly_exp, samples, outputs[5,:])	
+	surr_model_edvol = cp.fit_regression(poly_exp, samples, outputs[4,:])	
+	surr_model_eddef = cp.fit_regression(poly_exp, samples, outputs[5,:])	
 
 	surrogates = {'alfa1': surr_model_alfa1, 'beta1': surr_model_beta1, 
 	 			  'alfa2': surr_model_alfa2, 'beta2': surr_model_beta2, 
-				  'vol': surr_model_vol, 'def': surr_model_def}
+				  'edvol': surr_model_edvol, 'eddef': surr_model_eddef}
 
+	#
+	# uncertainty quantification
+	#
 	if(args.uq):
-		# dados estatisticos	
-		mean_alfa1 = cp.E(surr_model_alfa1, distribution)
-		std_alfa1 = cp.Std(surr_model_alfa1, distribution)
-
-		mean_beta1 = cp.E(surr_model_beta1, distribution)
-		std_beta1 = cp.Std(surr_model_beta1, distribution)
-
-		mean_alfa2 = cp.E(surr_model_alfa2, distribution)
-		std_alfa2 = cp.Std(surr_model_alfa2, distribution)
-
-		mean_beta2 = cp.E(surr_model_beta2, distribution)
-		std_beta2 = cp.Std(surr_model_beta2, distribution)
-
-		mean_vol = cp.E(surr_model_vol, distribution)
-		std_vol = cp.Std(surr_model_vol, distribution)
-
-		mean_def = cp.E(surr_model_def, distribution)
-		std_def = cp.Std(surr_model_def, distribution)
-		
 		print("dados dos emuladores (alfa1,beta1,alfa2,beta2,vol,def)")
-		print(" alfa1: %.2f %.2f" % (mean_alfa1, std_alfa1))
-		print(" beta1: %.2f %.2f" % (mean_beta1, std_beta1))
-		print(" alfa2: %.2f %.2f" % (mean_alfa2, std_alfa2))
-		print(" beta2: %.2f %.2f" % (mean_beta2, std_beta2))
-		print(" edvol: %.2f %.2f" % (mean_vol, std_vol))
-		print(" eddef: %.2f %.2f" % (mean_def, std_def))
-
+		perform_uq(surrogates, distribution)
+			
 	#
 	# plot QoI distributions
 	#
@@ -156,8 +141,8 @@ if __name__ == "__main__":
 		dist_beta1 = cp.QoI_Dist(surr_model_beta1, distribution)
 		dist_alfa2 = cp.QoI_Dist(surr_model_alfa2, distribution)
 		dist_beta2 = cp.QoI_Dist(surr_model_beta2, distribution)
-		dist_edvol = cp.QoI_Dist(surr_model_vol, distribution)
-		dist_eddef = cp.QoI_Dist(surr_model_def, distribution)
+		dist_edvol = cp.QoI_Dist(surr_model_edvol, distribution)
+		dist_eddef = cp.QoI_Dist(surr_model_eddef, distribution)
 		plot_qoi(dist_alfa1, 'hist_alfa1', r'$\alpha_1$')
 		plot_qoi(dist_beta1, 'hist_beta1', r'$\beta_1$')
 		plot_qoi(dist_alfa2, 'hist_alfa2', r'$\alpha_2$')
@@ -175,8 +160,8 @@ if __name__ == "__main__":
 		r2coef[1] = pce_prediction(surr_model_beta1, samples_test, respostas_test, 1, 'beta1')
 		r2coef[2] = pce_prediction(surr_model_alfa2, samples_test, respostas_test, 2, 'alfa2')
 		r2coef[3] = pce_prediction(surr_model_beta2, samples_test, respostas_test, 3, 'beta2')
-		r2coef[4] = pce_prediction(surr_model_vol, samples_test, respostas_test, 4, 'vol')
-		r2coef[5] = pce_prediction(surr_model_def, samples_test, respostas_test, 5, 'def')
+		r2coef[4] = pce_prediction(surr_model_edvol, samples_test, respostas_test, 4, 'vol')
+		r2coef[5] = pce_prediction(surr_model_eddef, samples_test, respostas_test, 5, 'def')
 		print(' R2 min:', r2coef.min())
 		print(' R2 max:', r2coef.max())
 
