@@ -2,6 +2,7 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt 
 import chaospy as cp
+import argparse
 
 plt.style.use(['science','no-latex'])
 
@@ -29,19 +30,49 @@ def sobol(sens_m, sens_t, in_names):
 
 # -----------------------------------------------------------------------------
 
+def check_model(m,p,shp):
+	nout = shp[0]
+	nin = shp[1]
+
+	assert(nout == 6)
+
+	if(m == 'full' and p == 'orig'):
+		assert(nin == 8)
+	elif(m == 'full' and p == 'rpar'):
+		assert(nin == 4)
+	elif(m == 'tiso' and p == 'orig'):
+		assert(nin == 4)
+	elif(m == 'tiso' and p == 'rpar'):
+		assert(nin == 3)
+	else:
+		print('invalid model and parametrization')
+		sys.exit(0)
+
+# -----------------------------------------------------------------------------
+
 if __name__ == "__main__":
 
-	basedir = sys.argv[1]
+	# parser
+	parser = argparse.ArgumentParser()
+	parser.add_argument('-m', type=str, default='full', help="model (tiso/full)", required=True)
+	parser.add_argument('-p', type=str, default='orig', help="parametrization (rpar/orig)", required=True)
+	args = parser.parse_args()
+
+	m = args.m
+	p = args.p
 
 	# files for sobol indices
-	arq_m = basedir + 'sobol_main.txt'
-	arq_t = basedir + 'sobol_total.txt'
+	arq_m = 'data_sobol_main.txt'
+	arq_t = 'data_sobol_total.txt'
 
 	# read files
 	sens_m = np.loadtxt(arq_m, comments='#')
 	sens_t = np.loadtxt(arq_t, comments='#')
 	print(np.shape(sens_m))
 	print(np.shape(sens_t))
+
+	# check dimensions and sizes for sobol computation
+	check_model(m, p, np.shape(sens_m))
 
 	# labels for inputs
 	in_names_tiso_rpar = [r'$q_1$', r'$q_2$', r'$q_3$']
@@ -50,13 +81,13 @@ if __name__ == "__main__":
 	in_names_full_orig = [r'$a$', r'$b$', r'$a_f$', r'$b_f$', r'$a_s$', r'$b_s$', r'$a_{f}$', r'$b_{fs}$']
 	
 	in_names = None
-	if(('tiso' in basedir) and ('rpar' in basedir)):
+	if((m == 'tiso') and (p == 'rpar')):
 		in_names = in_names_tiso_rpar
-	elif(('tiso' in basedir) and ('orig' in basedir)):
+	elif((m == 'tiso') and (p == 'orig')):
 		in_names = in_names_tiso_orig
-	elif(('full' in basedir) and ('rpar' in basedir)):
+	elif((m == 'full') and (p == 'rpar')):
 		in_names = in_names_full_rpar
-	elif(('full' in basedir) and ('orig' in basedir)):
+	elif((m == 'full') and (p == 'orig')):
 		in_names = in_names_full_orig	
 	
 	# plot sobol indices

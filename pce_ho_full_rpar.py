@@ -2,17 +2,14 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt 
 import chaospy as cp
+import lmfit
+import time
 import argparse
 from math import factorial
 from loo import calcula_loo
 from util import *
 
 plt.style.use(['science','no-latex'])
-
-def klotz_pv(p,a,b):
-	v = np.zeros(100)
-	v = (p/a)**(1.0/b)
-	return v
 
 def residual(pars, y_resp):
 	p = np.zeros(3)
@@ -35,7 +32,7 @@ if __name__ == "__main__":
 	parser.add_argument('-uq', dest='uq', action='store_true', help='perform UQ ')
 	parser.add_argument('-sa', dest='sa', action='store_true', help='perform SA (Sobol indices)')
 	parser.add_argument('-qoi', dest='qoi', action='store_true',help='obtain QoIs dist')
-	parser.add_argument('-all', dest='all', action='store_true', help='perform all tasks (UQ/SA/QoI/test)')
+	parser.add_argument('-all', dest='all', action='store_true', help='perform all tasks (uq/sa/qoi/test)')
 	parser.add_argument('-test', dest='test', action='store_true',help='check test data and prediction accuracy')
 	args = parser.parse_args()
 
@@ -45,19 +42,12 @@ if __name__ == "__main__":
 		args.qoi = True
 		args.test = True
 
-	# Holzapfel-Ogden reference values
-	a0 = 150 #228.0	 		# Pa
-	b0 = 6.0 #7.780			# dimensionless
-	af0 = 116.85	 		# Pa
-	bf0 = 11.83425			# dimensionless
-
-	# Parameter distributions
-	perc = 0.3
-	a = cp.Uniform((1-perc)*a0,   (1+perc)*a0)
-	b = cp.Uniform((1-perc)*b0,   (1+perc)*b0)
-	af = cp.Uniform((1-perc)*af0, (1+perc)*af0)
-	bf = cp.Uniform((1-perc)*bf0, (1+perc)*bf0)
-	distribution = cp.J(a, b, af, bf)
+	# Holzapfel-Ogden reduced parametrization
+	Z1 = cp.Uniform(0.7, 1.3)   # q1
+	Z2 = cp.Uniform(0.7, 1.3)   # q2
+	Z3 = cp.Uniform(0.7, 1.3)   # q3
+	Z4 = cp.Uniform(0.7, 1.3)   # q4
+	distribution = cp.J(Z1, Z2, Z3, Z4)
 
 	npar = 4            # number of parameters
 	nout = 6            # (alfa1,beta1,alfa2,beta2,vol,def)
@@ -71,45 +61,34 @@ if __name__ == "__main__":
 	print("fator multiplicativo", pce_mult)
 	print("numero de amostras", Ns)
 
-    # dados
-	outdir_train = '../results/output_ho_tiso_orig_train/'
-	outdir_test  = '../results/output_ho_tiso_orig_test/'
-	datafile_train = 'trainData.txt'
-	datafile_test  = 'testData.txt'
+	# dados
+	outdir = '../results/output_ho_full_rpar_train/'
+	datafile = 'trainData.txt'
 
-	# train data
-	arq = outdir_train + datafile_train
+	arq = outdir + datafile
+
 	data = np.loadtxt(arq, comments='#', delimiter=',')
 	samples = data[:Ns,0:4] # trunca ate o numero de amostras
 	samples = samples.transpose()
 	outputs = data[:Ns,4:10] 
 	outputs = outputs.transpose()
-	print("data", np.shape(data))
-	print("samples", np.shape(samples))
-	print("outputs", np.shape(outputs))
+	print("data",np.shape(data))
+	print("samples",np.shape(samples))
+	print("respostas",np.shape(outputs))
 
-	# test data
-	arq_test = outdir_test + datafile_test
-	data_test = np.loadtxt(arq_test, comments='#', delimiter=',')
-	n_test = 100
-	samples_test = data_test[:n_test,0:4] # trunca ate n_test
-	samples_test = samples_test.transpose()
-	respostas_test = data_test[:n_test,4:10] 
-	
 	# scatter plots
-	labels_samples = ['a','b','af','bf']
+	labels_samples = ['q1','q2','q3','q4']
 	labels_outputs = ['alpha1','beta1','alpha2','beta2','vol','fiberStretch']
 	scatter_inputs(samples,labels_samples)
 	scatter_inputs_outputs(samples,outputs,labels_samples,labels_outputs)	
-	
-	# estatisticas descritivas
+
 	print("estatisticas dos outputs (mean,std)")
 	print(' alfa1: %.2f %.2f' % (np.mean(outputs[0,:]),np.std(outputs[0,:])))
 	print(' beta1: %.2f %.2f' % (np.mean(outputs[1,:]),np.std(outputs[1,:])))
 	print(' alfa2: %.2f %.2f' % (np.mean(outputs[2,:]),np.std(outputs[2,:])))
 	print(' beta2: %.2f %.2f' % (np.mean(outputs[3,:]),np.std(outputs[3,:])))
-	print(' edvol: %.2f %.2f' % (np.mean(outputs[4,:]),np.std(outputs[4,:])))
-	print(' eddef: %.2f %.2f' % (np.mean(outputs[5,:]),np.std(outputs[5,:])))
+	print(' vol: %.2f %.2f' % (np.mean(outputs[4,:]),np.std(outputs[4,:])))
+	print(' def: %.2f %.2f' % (np.mean(outputs[5,:]),np.std(outputs[5,:])))
 
 	# create the pce emulator
 	poly_exp = cp.orth_ttr(pce_degree, distribution)
@@ -120,12 +99,16 @@ if __name__ == "__main__":
 	surr_model_beta1 = cp.fit_regression(poly_exp, samples, outputs[1,:])
 	surr_model_alfa2 = cp.fit_regression(poly_exp, samples, outputs[2,:])
 	surr_model_beta2 = cp.fit_regression(poly_exp, samples, outputs[3,:])	
-	surr_model_edvol = cp.fit_regression(poly_exp, samples, outputs[4,:])	
-	surr_model_eddef = cp.fit_regression(poly_exp, samples, outputs[5,:])	
+	surr_model_vol   = cp.fit_regression(poly_exp, samples, outputs[4,:])	
+	surr_model_def   = cp.fit_regression(poly_exp, samples, outputs[5,:])	
 
 	surrogates = {'alfa1': surr_model_alfa1, 'beta1': surr_model_beta1, 
 	 			  'alfa2': surr_model_alfa2, 'beta2': surr_model_beta2, 
-				  'edvol': surr_model_edvol, 'eddef': surr_model_eddef}
+				  'edvol': surr_model_vol,   'eddef': surr_model_def}
+
+	tex_labels = {'alfa1': r'$\alpha_1$', 'beta1': r'$\beta_1$', 
+	 			  'alfa2': r'$\alpha_2$', 'beta2': r'$\beta_2$', 
+				  'edvol': 'volume [mL]', 'eddef': 'fiber stretch [-]'}
 
 	#
 	# uncertainty quantification
@@ -133,24 +116,13 @@ if __name__ == "__main__":
 	if(args.uq):
 		print("dados dos emuladores (alfa1,beta1,alfa2,beta2,vol,def)")
 		perform_uq(surrogates, distribution)
-			
+
 	#
 	# plot QoI distributions
 	#
 	if(args.qoi):
 		print('criando e calculando distribuicoes das QoIs')
-		dist_alfa1 = cp.QoI_Dist(surr_model_alfa1, distribution)
-		dist_beta1 = cp.QoI_Dist(surr_model_beta1, distribution)
-		dist_alfa2 = cp.QoI_Dist(surr_model_alfa2, distribution)
-		dist_beta2 = cp.QoI_Dist(surr_model_beta2, distribution)
-		dist_edvol = cp.QoI_Dist(surr_model_edvol, distribution)
-		dist_eddef = cp.QoI_Dist(surr_model_eddef, distribution)
-		plot_qoi(dist_alfa1, 'hist_alfa1', r'$\alpha_1$')
-		plot_qoi(dist_beta1, 'hist_beta1', r'$\beta_1$')
-		plot_qoi(dist_alfa2, 'hist_alfa2', r'$\alpha_2$')
-		plot_qoi(dist_beta2, 'hist_beta2', r'$\beta_2$')
-		plot_qoi(dist_edvol, 'hist_vol', 'volume [mL]')
-		plot_qoi(dist_eddef, 'hist_def', 'fiber stretch [-]')
+		plot_qois(surrogates, distribution, tex_labels)
 
 	#
 	# check prediction accuracy
@@ -158,12 +130,15 @@ if __name__ == "__main__":
 	if(args.test):
 		print('previsao dos emuladores')
 		r2coef = np.zeros((6))
-		r2coef[0] = pce_prediction(surr_model_alfa1, samples_test, respostas_test, 0, 'alfa1')
-		r2coef[1] = pce_prediction(surr_model_beta1, samples_test, respostas_test, 1, 'beta1')
-		r2coef[2] = pce_prediction(surr_model_alfa2, samples_test, respostas_test, 2, 'alfa2')
-		r2coef[3] = pce_prediction(surr_model_beta2, samples_test, respostas_test, 3, 'beta2')
-		r2coef[4] = pce_prediction(surr_model_edvol, samples_test, respostas_test, 4, 'vol')
-		r2coef[5] = pce_prediction(surr_model_eddef, samples_test, respostas_test, 5, 'def')
+		for index, skey in enumerate(surrogates):
+			surr = surrogates[skey]
+			r2coef[index] = pce_prediction(surr, samples_test, outputs_test, index, skey)
+			#r2coef[0] = pce_prediction(surr_model_alfa1, samples_test, outputs_test, 0, 'alfa1')
+			#r2coef[1] = pce_prediction(surr_model_beta1, samples_test, outputs_test, 1, 'beta1')
+			#r2coef[2] = pce_prediction(surr_model_alfa2, samples_test, outputs_test, 2, 'alfa2')
+			#r2coef[3] = pce_prediction(surr_model_beta2, samples_test, outputs_test, 3, 'beta2')
+			#r2coef[4] = pce_prediction(surr_model_vol, samples_test, outputs_test, 4, 'vol')
+			#r2coef[5] = pce_prediction(surr_model_def, samples_test, outputs_test, 5, 'def')
 		print(' R2 min:', r2coef.min())
 		print(' R2 max:', r2coef.max())
 
@@ -171,14 +146,9 @@ if __name__ == "__main__":
 	# sensitivity analysis
 	#
 	if(args.sa):
-
-		# main sobol indices
 		print('calculando indices de Sobol (main/total)')
-		np.set_printoptions(precision=2)
-
 		sobol_m = np.zeros((6,4))
 		sobol_t = np.zeros((6,4))
-
 		for index, skey in enumerate(surrogates):
 			print(' ' + str(index) + ' qoi: ' + skey)
 			surr = surrogates[skey]		 	
@@ -186,6 +156,7 @@ if __name__ == "__main__":
 			sobol_t[index,:] = cp.Sens_t(surr, distribution)
 
 		# salva os indices de sobol em arquivo
-		np.savetxt("data_sobol_main.txt", sobol_m, header='a b af bf')
-		np.savetxt("data_sobol_total.txt", sobol_t, header='a b af bf')
-
+		np.savetxt("data_sobol_main.txt", sobol_m, header='q1 q2 q3 q4')
+		np.savetxt("data_sobol_total.txt", sobol_t, header='q1 q2 q3 q4')
+	
+# end

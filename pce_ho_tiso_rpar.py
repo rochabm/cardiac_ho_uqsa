@@ -18,6 +18,8 @@ if __name__ == "__main__":
 
 	# parser
 	parser = argparse.ArgumentParser()
+	parser.add_argument('-d', type=int, default=2, help="PCE polynomial degree")
+	parser.add_argument('-m', type=int, default=2, help="PCE multiplicative factor")
 	parser.add_argument('-uq', dest='uq', action='store_true', help='perform UQ ')
 	parser.add_argument('-sa', dest='sa', action='store_true', help='perform SA (Sobol indices)')
 	parser.add_argument('-qoi', dest='qoi', action='store_true',help='obtain QoIs dist')
@@ -37,10 +39,10 @@ if __name__ == "__main__":
 	Z3 = cp.Uniform(0.7, 1.3)   # q3
 	distribution = cp.J(Z1, Z2, Z3)
 
-	npar = 3       # number of parameters
-	nout = 6       # (alfa1,beta1,alfa2,beta2,vol,def)
-	pce_degree = 5 # polinomial degree
-	pce_mult = 2   # multiplicative factor
+	npar = 3            # number of parameters
+	nout = 6            # (alfa1,beta1,alfa2,beta2,vol,def)
+	pce_degree = args.d # polinomial degree
+	pce_mult = args.m   # multiplicative factor
 	Np = int(factorial(npar+pce_degree)/(factorial(npar)*factorial(pce_degree)))
 	Ns = pce_mult * Np
 	print("numero de parametros de entrada", npar)
@@ -50,15 +52,13 @@ if __name__ == "__main__":
 	print("numero de amostras", Ns)
 
     # dados
-	outdir_train = 'output_ho_tiso_rpar_train/'
-	outdir_test  = 'output_ho_tiso_rpar_test/'
+	outdir_train = '../results/output_ho_tiso_rpar_train/'
+	outdir_test  = '../results/output_ho_tiso_rpar_test/'
 	datafile_train = 'trainData.txt'
 	datafile_test  = 'testData.txt'
 
 	# train data
-	outdir_train = 'output_ho_tiso_rpar_train/'
-	datafile = 'trainData.txt'
-	arq = outdir_train + datafile
+	arq = outdir_train + datafile_train
 	data = np.loadtxt(arq, comments='#', delimiter=',')
 	samples = data[:Ns,0:3] # trunca ate o numero de amostras
 	samples = samples.transpose()
@@ -142,12 +142,15 @@ if __name__ == "__main__":
 	if(args.test):
 		print('previsao dos emuladores')
 		r2coef = np.zeros((6))
-		r2coef[0] = pce_prediction(surr_model_alfa1, samples_test, outputs_test, 0, 'alfa1')
-		r2coef[1] = pce_prediction(surr_model_beta1, samples_test, outputs_test, 1, 'beta1')
-		r2coef[2] = pce_prediction(surr_model_alfa2, samples_test, outputs_test, 2, 'alfa2')
-		r2coef[3] = pce_prediction(surr_model_beta2, samples_test, outputs_test, 3, 'beta2')
-		r2coef[4] = pce_prediction(surr_model_vol, samples_test, outputs_test, 4, 'vol')
-		r2coef[5] = pce_prediction(surr_model_def, samples_test, outputs_test, 5, 'def')
+		for index, skey in enumerate(surrogates):
+			surr = surrogates[skey]
+			r2coef[index] = pce_prediction(surr, samples_test, outputs_test, index, skey)
+			#r2coef[0] = pce_prediction(surr_model_alfa1, samples_test, outputs_test, 0, 'alfa1')
+			#r2coef[1] = pce_prediction(surr_model_beta1, samples_test, outputs_test, 1, 'beta1')
+			#r2coef[2] = pce_prediction(surr_model_alfa2, samples_test, outputs_test, 2, 'alfa2')
+			#r2coef[3] = pce_prediction(surr_model_beta2, samples_test, outputs_test, 3, 'beta2')
+			#r2coef[4] = pce_prediction(surr_model_vol, samples_test, outputs_test, 4, 'vol')
+			#r2coef[5] = pce_prediction(surr_model_def, samples_test, outputs_test, 5, 'def')
 		print(' R2 min:', r2coef.min())
 		print(' R2 max:', r2coef.max())
 
@@ -155,8 +158,6 @@ if __name__ == "__main__":
 	# sensitivity analysis
 	#
 	if(args.sa):
-
-		# main sobol indices
 		print('calculando indices de Sobol (main/total)')
 		sobol_m = np.zeros((6,3))
 		sobol_t = np.zeros((6,3))
@@ -167,7 +168,5 @@ if __name__ == "__main__":
 			sobol_t[index,:] = cp.Sens_t(surr, distribution)
 
 		# salva os indices de sobol em arquivo
-		sm_file = outdir_train + "sobol_main.txt"
-		st_file = outdir_train + "sobol_total.txt"
-		np.savetxt(sm_file, sobol_m, header='q1 q2 q3')
-		np.savetxt(st_file, sobol_t, header='q1 q2 q3')
+		np.savetxt("data_sobol_main.txt", sobol_m, header='q1 q2 q3')
+		np.savetxt("data_sobol_total.txt", sobol_t, header='q1 q2 q3')
