@@ -2,6 +2,7 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt 
 import chaospy as cp
+from sklearn.metrics import r2_score
 
 plt.style.use('ieee')
 
@@ -61,10 +62,16 @@ def pce_prediction(surrogate, samples, test_data, out_index, out_label):
 	plt.tight_layout()
 	plt.savefig('fig_pred_%s.png' % out_label)
 
-	corr_matrix = np.corrcoef(qoi_true, qoi_pred)
-	corr = corr_matrix[0,1]
+	#corr_matrix = np.corrcoef(qoi_true, qoi_pred)
+	#print(corr_matrix)
+	#corr = corr_matrix[0,1]
 	# R2 coefficient of determination
-	rsq = corr**2
+	#rsq = corr**2
+
+	#y_true = [3, -0.5, 2, 7]
+	#y_pred = [2.5, 0.0, 2, 8]
+	rsq = r2_score(qoi_true, qoi_pred)
+
 	return rsq
 
 # -----------------------------------------------------------------------------

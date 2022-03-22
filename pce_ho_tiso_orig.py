@@ -109,6 +109,10 @@ if __name__ == "__main__":
 	 			  'alfa2': surr_model_alfa2, 'beta2': surr_model_beta2, 
 				  'edvol': surr_model_edvol, 'eddef': surr_model_eddef}
 
+	tex_labels = {'alfa1': r'$\alpha_1$', 'beta1': r'$\beta_1$', 
+	 			  'alfa2': r'$\alpha_2$', 'beta2': r'$\beta_2$', 
+				  'edvol': 'volume [mL]', 'eddef': 'fiber stretch [-]'}
+
 	#
 	# uncertainty quantification
 	#
@@ -121,18 +125,7 @@ if __name__ == "__main__":
 	#
 	if(args.qoi):
 		print('criando e calculando distribuicoes das QoIs')
-		dist_alfa1 = cp.QoI_Dist(surr_model_alfa1, distribution)
-		dist_beta1 = cp.QoI_Dist(surr_model_beta1, distribution)
-		dist_alfa2 = cp.QoI_Dist(surr_model_alfa2, distribution)
-		dist_beta2 = cp.QoI_Dist(surr_model_beta2, distribution)
-		dist_edvol = cp.QoI_Dist(surr_model_edvol, distribution)
-		dist_eddef = cp.QoI_Dist(surr_model_eddef, distribution)
-		plot_qoi(dist_alfa1, 'hist_alfa1', r'$\alpha_1$')
-		plot_qoi(dist_beta1, 'hist_beta1', r'$\beta_1$')
-		plot_qoi(dist_alfa2, 'hist_alfa2', r'$\alpha_2$')
-		plot_qoi(dist_beta2, 'hist_beta2', r'$\beta_2$')
-		plot_qoi(dist_edvol, 'hist_vol', 'volume [mL]')
-		plot_qoi(dist_eddef, 'hist_def', 'fiber stretch [-]')
+		plot_qois(surrogates, distribution, tex_labels)
 
 	#
 	# check prediction accuracy
