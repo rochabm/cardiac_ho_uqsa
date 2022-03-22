@@ -1,10 +1,8 @@
 import sys
+import argparse
 import numpy as np
 import matplotlib.pyplot as plt 
 import chaospy as cp
-import lmfit
-import time
-import argparse
 from math import factorial
 from loo import calcula_loo
 from util import *

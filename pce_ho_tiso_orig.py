@@ -1,30 +1,12 @@
 import sys
+import argparse
 import numpy as np
 import matplotlib.pyplot as plt 
 import chaospy as cp
-import argparse
 from math import factorial
-from loo import calcula_loo
 from util import *
 
 plt.style.use(['science','no-latex'])
-
-def klotz_pv(p,a,b):
-	v = np.zeros(100)
-	v = (p/a)**(1.0/b)
-	return v
-
-def residual(pars, y_resp):
-	p = np.zeros(3)
-	p[0] = pars['q1']
-	p[1] = pars['q2']
-	p[2] = pars['q3']
-	y_pol = np.zeros(len(y_resp))
-	y_pol[0] = cp.numpoly.call(surr_model_alfa1, p)
-	y_pol[1] = cp.numpoly.call(surr_model_beta1, p)
-	y_pol[2] = cp.numpoly.call(surr_model_alfa2, p)
-	y_pol[3] = cp.numpoly.call(surr_model_beta2, p)
-	return y_pol - y_resp
 
 if __name__ == "__main__":
 
