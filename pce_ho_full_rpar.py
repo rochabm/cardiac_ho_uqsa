@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import chaospy as cp
 from math import factorial
 from loo import calcula_loo
-from util import *
+from uqsa_utils import *
 
 plt.style.use(['science','no-latex'])
 
