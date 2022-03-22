@@ -60,11 +60,13 @@ if __name__ == "__main__":
 	print("numero de amostras", Ns)
 
 	# dados
-	outdir = '../results/output_ho_full_rpar_train/'
-	datafile = 'trainData.txt'
+	outdir_train = '../results/output_ho_full_rpar_train/'
+	outdir_test  = '../results/output_ho_full_rpar_test/'
+	datafile_train = 'trainData.txt'
+	datafile_test  = 'testData.txt'
 
-	arq = outdir + datafile
-
+	# train data
+	arq = outdir_train + datafile_train
 	data = np.loadtxt(arq, comments='#', delimiter=',')
 	samples = data[:Ns,0:4] # trunca ate o numero de amostras
 	samples = samples.transpose()
@@ -73,6 +75,14 @@ if __name__ == "__main__":
 	print("data",np.shape(data))
 	print("samples",np.shape(samples))
 	print("respostas",np.shape(outputs))
+
+	# test data
+	arq_test = outdir_test + datafile_test
+	data_test = np.loadtxt(arq_test, comments='#', delimiter=',')
+	n_test = 100
+	samples_test = data_test[:n_test,0:4] # trunca ate n_test
+	samples_test = samples_test.transpose()
+	outputs_test = data_test[:n_test,4:10] 
 
 	# scatter plots
 	labels_samples = ['q1','q2','q3','q4']
@@ -131,14 +141,7 @@ if __name__ == "__main__":
 		for index, skey in enumerate(surrogates):
 			surr = surrogates[skey]
 			r2coef[index] = pce_prediction(surr, samples_test, outputs_test, index, skey)
-			#r2coef[0] = pce_prediction(surr_model_alfa1, samples_test, outputs_test, 0, 'alfa1')
-			#r2coef[1] = pce_prediction(surr_model_beta1, samples_test, outputs_test, 1, 'beta1')
-			#r2coef[2] = pce_prediction(surr_model_alfa2, samples_test, outputs_test, 2, 'alfa2')
-			#r2coef[3] = pce_prediction(surr_model_beta2, samples_test, outputs_test, 3, 'beta2')
-			#r2coef[4] = pce_prediction(surr_model_vol, samples_test, outputs_test, 4, 'vol')
-			#r2coef[5] = pce_prediction(surr_model_def, samples_test, outputs_test, 5, 'def')
-		print(' R2 min:', r2coef.min())
-		print(' R2 max:', r2coef.max())
+		print(' R2 coefs:', r2coef)
 
 	#
 	# sensitivity analysis

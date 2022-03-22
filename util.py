@@ -54,7 +54,7 @@ def pce_prediction(surrogate, samples, test_data, out_index, out_label):
 	
 	plt.figure()
 	plt.plot(xx,yy,'k-')
-	plt.plot(qoi_true, qoi_pred, 'o')
+	plt.plot(qoi_true, qoi_pred, 'o', markersize=4)
 	plt.xlabel('true')
 	plt.ylabel('predicted')
 	plt.title(out_label)
