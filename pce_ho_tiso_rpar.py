@@ -127,12 +127,6 @@ if __name__ == "__main__":
 		for index, skey in enumerate(surrogates):
 			surr = surrogates[skey]
 			r2coef[index] = pce_prediction(surr, samples_test, outputs_test, index, skey)
-			#r2coef[0] = pce_prediction(surr_model_alfa1, samples_test, outputs_test, 0, 'alfa1')
-			#r2coef[1] = pce_prediction(surr_model_beta1, samples_test, outputs_test, 1, 'beta1')
-			#r2coef[2] = pce_prediction(surr_model_alfa2, samples_test, outputs_test, 2, 'alfa2')
-			#r2coef[3] = pce_prediction(surr_model_beta2, samples_test, outputs_test, 3, 'beta2')
-			#r2coef[4] = pce_prediction(surr_model_vol, samples_test, outputs_test, 4, 'vol')
-			#r2coef[5] = pce_prediction(surr_model_def, samples_test, outputs_test, 5, 'def')
 		print(' R2 min:', r2coef.min())
 		print(' R2 max:', r2coef.max())
 
