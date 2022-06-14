@@ -15,9 +15,10 @@ def residual_pce(pars, y_resp, surrogates, monitor):
 	npars = len(pars)
 	nouts = len(surrogates)
 	p = np.zeros(npars)
-	p[0] = pars['q1']
-	p[1] = pars['q2']
-	p[2] = pars['q3']
+	p[0] = pars['a']
+	p[1] = pars['b']
+	p[2] = pars['af']
+	p[3] = pars['bf']
 	y_pol = np.zeros(nouts)
 	for ind, skey in enumerate(surrogates):
 		surr = surrogates[skey]
@@ -55,12 +56,26 @@ if __name__ == "__main__":
 	args = parser.parse_args()
 
 	# Holzapfel-Ogden reduced parametrization
-	Z1 = cp.Uniform(0.7, 1.3)   # q1
-	Z2 = cp.Uniform(0.7, 1.3)   # q2
-	Z3 = cp.Uniform(0.7, 1.3)   # q3
-	distribution = cp.J(Z1, Z2, Z3)
+	#Z1 = cp.Uniform(0.7, 1.3)   # q1
+	#Z2 = cp.Uniform(0.7, 1.3)   # q2
+	#Z3 = cp.Uniform(0.7, 1.3)   # q3
+	#distribution = cp.J(Z1, Z2, Z3)
 
-	npar = 3            # number of parameters
+	# Holzapfel-Ogden reference values
+	a0 = 150 #228.0	 		# Pa
+	b0 = 6.0 #7.780			# dimensionless
+	af0 = 116.85	 		# Pa
+	bf0 = 11.83425			# dimensionless
+
+	# Parameter distributions
+	perc = 0.3
+	a = cp.Uniform((1-perc)*a0,   (1+perc)*a0)
+	b = cp.Uniform((1-perc)*b0,   (1+perc)*b0)
+	af = cp.Uniform((1-perc)*af0, (1+perc)*af0)
+	bf = cp.Uniform((1-perc)*bf0, (1+perc)*bf0)
+	distribution = cp.J(a, b, af, bf)
+
+	npar = 4            # number of parameters
 	nout = 6            # (alfa1,beta1,alfa2,beta2,vol,def)
 	pce_degree = args.d # polinomial degree
 	pce_mult = args.m   # multiplicative factor
@@ -72,33 +87,33 @@ if __name__ == "__main__":
 	print("fator multiplicativo", pce_mult)
 	print("numero de amostras", Ns)
 
-    # dados
-	outdir_train = '../results/output_ho_tiso_rpar_train/'
-	outdir_test  = '../results/output_ho_tiso_rpar_test/'
+	# dados
+	outdir_train = 'results/output_ho_tiso_orig_train/'
+	outdir_test  = 'results/output_ho_tiso_orig_test/'
 	datafile_train = 'trainData.txt'
 	datafile_test  = 'testData.txt'
 
 	# train data
 	arq = outdir_train + datafile_train
 	data = np.loadtxt(arq, comments='#', delimiter=',')
-	samples = data[:Ns,0:3] # trunca ate o numero de amostras
+	samples = data[:Ns,0:4] # trunca ate o numero de amostras
 	samples = samples.transpose()
-	outputs = data[:Ns,3:9] 
+	outputs = data[:Ns,4:10] 
 	outputs = outputs.transpose()
 	print("data",np.shape(data))
 	print("samples",np.shape(samples))
 	print("outputs",np.shape(outputs))
 
 	# test data
+	n_test = 100
 	arq_test = outdir_test + datafile_test
 	data_test = np.loadtxt(arq_test, comments='#', delimiter=',')
-	n_test = 100
-	samples_test = data_test[:n_test,0:3] # trunca ate n_test
+	samples_test = data_test[:n_test,0:4] # trunca ate n_test
 	samples_test = samples_test.transpose()
-	outputs_test = data_test[:n_test,3:9] 
+	outputs_test = data_test[:n_test,4:10] 
 
 	# scatter plots
-	labels_samples = ['q1','q2','q3']
+	labels_samples = ['a','b','af','bf']
 	labels_outputs = ['alpha1','beta1','alpha2','beta2','vol','fiberStretch']
 
 	print("estatisticas dos outputs (mean,std)")
@@ -135,9 +150,13 @@ if __name__ == "__main__":
 
 	print("fitting using the PCE emulators")
 
-	chi_min = np.zeros(Ns)
-	chi_max = np.zeros(Ns)
-	chi_mean = np.zeros(Ns)
+	vec_chisqr = np.zeros(Ns)
+	vec_nfev = np.zeros(Ns)
+
+	metodo = 'nelder'
+	#metodo = 'leastsq'
+	#metodo = 'differential_evolution'
+	print('lmfit method: %s' % metodo)
 
 	itest = 0
 	ntest = n_test
@@ -149,19 +168,20 @@ if __name__ == "__main__":
 
 	for j in range(itest, itest + ntest):
 		k = j - itest
-		print(" case %d, sample %d" % (k,j))
+		print(" case %d, sample %d:" % (k,j), end='')
 		in_true = samples_test[:,j]
 		out_true = outputs_test[j,:]
 
 		fit_params = lmfit.Parameters()
-		fit_params.add("q1", vary=True, value=1, min=0.7, max=1.3)
-		fit_params.add("q2", vary=True, value=1, min=0.7, max=1.3)
-		fit_params.add("q3", vary=True, value=1, min=0.7, max=1.3)
+		fit_params.add("a",   vary=True, value=a0, min=(1-perc)*a0, max=(1+perc)*a0)
+		fit_params.add("b",   vary=True, value=b0, min=(1-perc)*b0, max=(1+perc)*b0)
+		fit_params.add("af", vary=True, value=af0, min=(1-perc)*af0, max=(1+perc)*af0)
+		fit_params.add("bf", vary=True, value=bf0, min=(1-perc)*bf0, max=(1+perc)*bf0)
 
 		done = False
 		cont = 1
-		#metodo = 'leastsq'
-		metodo = 'differential_evolution'
+		metodo = 'leastsq'
+		#metodo = 'differential_evolution'
 		conv_monitor = []
 
 		while(not done):
@@ -195,7 +215,9 @@ if __name__ == "__main__":
 					#fit_params['af'].value = samples_full[j, 2]
 			else:
 				done = True
-				print('  nfev: %d chisqr: %e' % (result_fit.nfev, result_fit.chisqr))
+				print('  nfev: %d, chisqr: %e' % (result_fit.nfev, result_fit.chisqr))
+				vec_nfev[k] = result_fit.nfev
+				vec_chisqr[k] = result_fit.chisqr
 				#lmfit.report_fit(result_fit)
 
 			cont = cont + 1
@@ -206,10 +228,11 @@ if __name__ == "__main__":
         #    print("Nao fez um bom ajuste")
         #    sys.exit(0)
 
-		par_fit = np.zeros(3)
-		par_fit[0] = result_fit.params["q1"].value
-		par_fit[1] = result_fit.params["q2"].value
-		par_fit[2] = result_fit.params["q3"].value
+		par_fit = np.zeros(4)
+		par_fit[0] = result_fit.params["a"].value
+		par_fit[1] = result_fit.params["b"].value
+		par_fit[2] = result_fit.params["af"].value
+		par_fit[3] = result_fit.params["bf"].value
 
 		fitted_params[k, :] = par_fit[:]
 
