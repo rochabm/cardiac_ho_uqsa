@@ -113,9 +113,10 @@ if __name__ == "__main__":
 	print("outputs",np.shape(outputs))
 
 	# test data
-	n_test = 100
+	n_test = 10
 	arq_test = outdir_test + datafile_test
 	data_test = np.loadtxt(arq_test, comments='#', delimiter=',')
+	print(np.shape(data_test))
 	samples_test = data_test[:n_test,0:8] # trunca ate n_test
 	samples_test = samples_test.transpose()
 	outputs_test = data_test[:n_test,8:14] 
@@ -158,9 +159,9 @@ if __name__ == "__main__":
 
 	print("fitting using the PCE emulators")
 
-	metodo = 'nelder'
-	#metodo = 'leastsq'
-	#metodo = 'differential_evolution'
+	metodo = 'nelder'                  # Nelder-Mead  
+	#metodo = 'leastsq'                 # LM
+	#metodo = 'differential_evolution' # DE
 	print('lmfit method: %s' % metodo)
 
 	vec_chisqr = np.zeros(Ns)
