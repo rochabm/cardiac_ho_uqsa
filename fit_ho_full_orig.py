@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import chaospy as cp
 from math import factorial
 from uqsa_utils import *
+from sklearn.metrics import r2_score, mean_squared_error
 
 plt.style.use(['science','no-latex'])
 
@@ -277,7 +278,9 @@ if __name__ == "__main__":
 		lab = tex_labels[skey]
 		xmin,xmax = outputs_test[:,ind].min(), outputs_test[:,ind].max()
 		xx = np.linspace(xmin,xmax,1000)
-		print('',ind,skey,lab,xmin,xmax)
+		r2 = r2_score(outputs_test[:,ind], predic_output[:,ind])
+		mse = mean_squared_error(outputs_test[:,ind], predic_output[:,ind])
+		print('',ind,skey,lab,xmin,xmax,'r2_score:',r2,'mse:',mse)
 		plt.figure()
 		plt.plot(xx,xx,'k-')
 		for j in range(itest, itest + ntest):

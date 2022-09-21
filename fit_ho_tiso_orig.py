@@ -1,4 +1,4 @@
-import sys
+import os, sys
 import lmfit
 import argparse
 import numpy as np
@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import chaospy as cp
 from math import factorial
 from uqsa_utils import *
+from sklearn.metrics import r2_score, mean_squared_error
 
 plt.style.use(['science','no-latex'])
 
@@ -53,6 +54,7 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
 	parser.add_argument('-d', type=int, default=2, help="PCE polynomial degree")
 	parser.add_argument('-m', type=int, default=2, help="PCE multiplicative factor")
+	parser.add_argument('-o', type=str, default='output', help="output directory")
 	args = parser.parse_args()
 
 	# Holzapfel-Ogden reduced parametrization
@@ -150,8 +152,8 @@ if __name__ == "__main__":
 
 	print("fitting using the PCE emulators")
 
-	vec_chisqr = np.zeros(Ns)
-	vec_nfev = np.zeros(Ns)
+	vec_chisqr = np.zeros(n_test)
+	vec_nfev = np.zeros(n_test)
 
 	metodo = 'nelder'
 	#metodo = 'leastsq'
@@ -161,27 +163,28 @@ if __name__ == "__main__":
 	itest = 0
 	ntest = n_test
 
+	output_dir = args.o
+	os.makedirs(output_dir, exist_ok=True)
+
 	fitted_params = np.empty((ntest, npar))
 	predic_output = np.empty((ntest, nout))
-	file_monitor = open('out_convergence.txt','w')
+	file_monitor = open(output_dir + '/out_convergence.txt','w')
     #outputs_full = respostas_full.transpose()
 
 	for j in range(itest, itest + ntest):
-		k = j - itest
+		k = j
 		print(" case %d, sample %d:" % (k,j), end='')
 		in_true = samples_test[:,j]
 		out_true = outputs_test[j,:]
 
 		fit_params = lmfit.Parameters()
-		fit_params.add("a",   vary=True, value=a0, min=(1-perc)*a0, max=(1+perc)*a0)
-		fit_params.add("b",   vary=True, value=b0, min=(1-perc)*b0, max=(1+perc)*b0)
+		fit_params.add("a",  vary=True, value=a0,  min=(1-perc)*a0,  max=(1+perc)*a0)
+		fit_params.add("b",  vary=True, value=b0,  min=(1-perc)*b0,  max=(1+perc)*b0)
 		fit_params.add("af", vary=True, value=af0, min=(1-perc)*af0, max=(1+perc)*af0)
 		fit_params.add("bf", vary=True, value=bf0, min=(1-perc)*bf0, max=(1+perc)*bf0)
 
 		done = False
 		cont = 1
-		metodo = 'leastsq'
-		#metodo = 'differential_evolution'
 		conv_monitor = []
 
 		while(not done):
@@ -252,13 +255,23 @@ if __name__ == "__main__":
 		file_monitor.write('\n')
 	
 	file_monitor.close()
+	
+	print('fitting statistics')
+	print(' chisqr min: %e' % np.min(vec_chisqr))
+	print(' chisqr max: %e' % np.max(vec_chisqr))
+	print(' chisqr mean: %e' % np.mean(vec_chisqr))
+	print(' nfev min: %f' % np.min(vec_nfev))
+	print(' nfev max: %f' % np.max(vec_nfev))
+	print(' nfev mean: %f' % np.mean(vec_nfev))
 
 	print('plotting true/pred')
 	for ind, skey in enumerate(tex_labels):
 		lab = tex_labels[skey]
 		xmin,xmax = outputs_test[:,ind].min(), outputs_test[:,ind].max()
 		xx = np.linspace(xmin,xmax,1000)
-		print('',ind,skey,lab,xmin,xmax)
+		r2 = r2_score(outputs_test[:,ind], predic_output[:,ind])
+		mse = mean_squared_error(outputs_test[:,ind], predic_output[:,ind])
+		print('',ind,skey,lab,xmin,xmax,'r2_score:',r2,'mse:',mse)
 		plt.figure()
 		plt.plot(xx,xx,'k-')
 		for j in range(itest, itest + ntest):
@@ -269,11 +282,11 @@ if __name__ == "__main__":
 		plt.xlabel('true')
 		plt.ylabel('fitted')
 		plt.tight_layout()
-		plt.savefig('fig_%s_true_fitted.png' % skey)
-		plt.savefig('fig_%s_true_fitted.pdf' % skey)
+		plt.savefig(output_dir + '/fig_%s_true_fitted.png' % skey)
+		plt.savefig(output_dir + '/fig_%s_true_fitted.pdf' % skey)
 
 	print("saving data")
-	np.savetxt("fitted_params.txt", fitted_params)
-	np.savetxt("predicted_output.txt", predic_output)
+	np.savetxt(output_dir + "/fitted_params.txt", fitted_params)
+	np.savetxt(output_dir + "/predicted_output.txt", predic_output)
 
 	print("done")
