@@ -13,7 +13,7 @@ def sobol(sens_m, sens_t, in_names):
 	nout = np.shape(sens_m)[0] # number of outputs
 	nin = np.shape(sens_m)[1]  # number of inputs
 	
-	out_names = [r'$\alpha_1$',r'$\beta_1$',r'$\alpha_2$',r'$\beta_2$','EDV','fiber stretch']
+	out_names = [r'$\alpha_1$',r'$\beta_1$',r'$\alpha_2$',r'$\beta_2$','EDV',r'$\varepsilon_{fiber}$']
 	
 	for i in range(nout):
 		fig = plt.figure()
@@ -78,7 +78,7 @@ if __name__ == "__main__":
 	in_names_tiso_rpar = [r'$q_1$', r'$q_2$', r'$q_3$']
 	in_names_tiso_orig = [r'$a$', r'$b$', r'$a_f$', r'$b_f$']
 	in_names_full_rpar = [r'$q_1$', r'$q_2$', r'$q_3$', r'$q_4$']
-	in_names_full_orig = [r'$a$', r'$b$', r'$a_f$', r'$b_f$', r'$a_s$', r'$b_s$', r'$a_{f}$', r'$b_{fs}$']
+	in_names_full_orig = [r'$a$', r'$b$', r'$a_f$', r'$b_f$', r'$a_s$', r'$b_s$', r'$a_{fs}$', r'$b_{fs}$']
 	
 	in_names = None
 	if((m == 'tiso') and (p == 'rpar')):

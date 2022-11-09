@@ -235,7 +235,7 @@ def LVPassiveFilling(geoparams, hoparams, sampleid=0):
 	print("HO parameters:", hoparams)
 	a, b = hoparams['a'], hoparams['b']
 	a_f, b_f = hoparams['af'], hoparams['bf']
-	a_s, b_s = hoparams['as'], hoparams['bs']
+	a_s, b_s = hoparams['a_s'], hoparams['bs']
 	a_fs, b_fs = hoparams['afs'], hoparams['bfs']
 
     # Fiber field
@@ -447,7 +447,7 @@ if __name__ == "__main__":
 
     hoparams = {'a': a0, 'b': b0, 
                 'af': af0, 'bf': bf0, 
-                'as': as0, 'bs': bs0, 
+                'a_s': as0, 'bs': bs0, 
                 'afs': afs0, 'bfs': bfs0} 
 
     print("Rodando HO + LV passive filling")

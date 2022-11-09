@@ -63,8 +63,8 @@ if __name__ == "__main__":
 	print("numero de amostras", Ns)
 
 	# dados
-	outdir_train = '../results/output_ho_full_orig_train/'
-	outdir_test  = '../results/output_ho_full_orig_test/'
+	outdir_train = 'results/output_ho_full_orig_train/'
+	outdir_test  = 'results/output_ho_full_orig_test/'
 	datafile_train = 'trainData.txt'
 	datafile_test  = 'testData.txt'	
 
@@ -91,7 +91,7 @@ if __name__ == "__main__":
 	labels_samples = ['a','b','af','bf','as','bs','afs','bfs']
 	labels_evals = ['alpha1','beta1','alpha2','beta2','vol','fiberStretch']
 	scatter_inputs(samples,labels_samples)
-	scatter_inputs_outputs(samples,outputs,labels_samples,labels_evals)	
+	scatter_inputs_outputs(samples,outputs,labels_samples,labels_evals)
 
 	# estatisticas descritivas
 	print("estatisticas dos outputs (mean,std)")

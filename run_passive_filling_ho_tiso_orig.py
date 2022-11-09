@@ -164,7 +164,8 @@ def sigma(u,piolak1):
 
 #------------------------------------------------------------------------------
 
-def LVPassiveFilling(mesh, base, endo, epi, ds, n_mesh, f_0, s_0, n_0, sampleid, a, b, a_f, b_f):
+def LVPassiveFilling_tiso_orig(mesh, base, endo, epi, ds, n_mesh, f_0, s_0, n_0, 
+								sampleid, a, b, a_f, b_f):
 	"""
 	sampleid: sample id
 	a, b, a_f, b_f: Holzapfel-Ogden parameters
@@ -385,12 +386,12 @@ def LVPassiveFilling(mesh, base, endo, epi, ds, n_mesh, f_0, s_0, n_0, sampleid,
 	# respostas
 	print("fitting vol")
 	print(vn)
-	result_vol = fitmodel(vn, outpress, 2, 1, plot_fit=True, plot_fid=sampleid, plot_label='vol')
+	result_vol = fitmodel(vn, outpress, 1.0, 4.0, plot_fit=True, plot_fid=sampleid, plot_label='vol')
 
 	print("fitting def")
 	print(outdef_avg)
 	print(outpress)
-	result_def = fitmodel(outdef_avg, outpress, 2, 1, plot_fit=True, plot_fid=sampleid, plot_label='def')
+	result_def = fitmodel(outdef_avg, outpress, 0.1, 40.0, plot_fit=True, plot_fid=sampleid, plot_label='def')
 
 	# resultados = [alfa1, beta1, alfa2, beta2, vol, def]
 	res = np.zeros((6))
@@ -462,7 +463,7 @@ if __name__ == "__main__":
 
 		# solve model
 		print("\nRodando caso %d: (%f,%f,%f,%f)" % (i,a, b, af, bf))
-		out = LVPassiveFilling(mesh, base, endo, epi, ds, nmesh, f0,s0, n0, i, a, b, af, bf)
+		out = LVPassiveFilling_tiso_orig(mesh, base, endo, epi, ds, nmesh, f0,s0, n0, i, a, b, af, bf)
 		
 		# senao deu erro, salva os dados
 		if out is not None:

@@ -60,8 +60,8 @@ if __name__ == "__main__":
 	print("numero de amostras", Ns)
 
 	# dados
-	outdir_train = '../results/output_ho_full_rpar_train/'
-	outdir_test  = '../results/output_ho_full_rpar_test/'
+	outdir_train = 'results/output_ho_full_rpar_train/'
+	outdir_test  = 'results/output_ho_full_rpar_test/'
 	datafile_train = 'trainData.txt'
 	datafile_test  = 'testData.txt'
 

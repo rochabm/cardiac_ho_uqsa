@@ -27,6 +27,7 @@ if __name__ == "__main__":
 	bs  = cp.Uniform(0.7*bs0,  1.3*bs0)
 	afs = cp.Uniform(0.7*afs0, 1.3*afs0)
 	bfs = cp.Uniform(0.7*bfs0, 1.3*bfs0)
+
 	distribution = cp.J(a, b, af, bf, as1, bs, afs, bfs)
 
 	# Code for creating gPC expansion
@@ -36,6 +37,8 @@ if __name__ == "__main__":
 	pce_mult = 2	# multiplicative factor
 	Np = int(factorial(npar+pce_degree)/(factorial(npar)*factorial(pce_degree))) # min number of terms for PCE
 	Ns = pce_mult * Np		#number of samples
+
+	Ns = 1
 	
 	# number of sample to start 
 	start = 0
@@ -49,6 +52,9 @@ if __name__ == "__main__":
 
 	# take samples from joint distribution
 	samples = distribution.sample(Ns)
+
+	samples = np.array([a0, b0, af0, bf0, as0, bs0, afs0, bfs0])
+	print(samples, np.shape(samples))
 
 	# prepare for output 
 	shutil.rmtree("output/") 
@@ -73,8 +79,10 @@ if __name__ == "__main__":
 	evals = []
 
 	# solve model for each sample
-	for i in range(len(samples.T)):
-		Z = samples.T[i,:]
+	#for i in range(len(samples.T)):
+	for i in range(1):
+		#Z = samples.T[i,:]
+		Z = samples
 
 		# reduced parametrization
 		a,   b   = float(Z[0]), float(Z[1])
@@ -84,7 +92,7 @@ if __name__ == "__main__":
 
 		hoparams = {'a': a, 'b': b, 
 		            'af': af, 'bf': bf, 
-					'as': as1, 'bs': bs, 
+					'a_s': as1, 'bs': bs, 
 					'afs': afs, 'bfs': bfs} 
 
 		qin = np.array([a,b,af,bf,as1,bs,afs,bfs])

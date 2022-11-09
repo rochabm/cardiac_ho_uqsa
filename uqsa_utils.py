@@ -14,7 +14,7 @@ def perform_uq(surrogates, dist):
 		surr = surrogates[skey]		 	
 		surr_avg = cp.E(surr, dist)
 		surr_std = cp.Std(surr, dist)
-		print(' ' + skey + ' %.2f %.2f' % (surr_avg, surr_std))
+		print(' ' + skey + ' %.6f %.6f' % (surr_avg, surr_std))
 
 # -----------------------------------------------------------------------------
 
